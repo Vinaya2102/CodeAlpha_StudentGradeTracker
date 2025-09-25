@@ -1,0 +1,146 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+
+class Student {
+    String name;
+    double grade;
+
+    Student(String name, double grade) {
+        this.name = name;
+        this.grade = grade;
+    }
+}
+
+public class StudentGradeTrackerGUI extends JFrame {
+    private JTextField nameField;
+    private JTextField gradeField;
+    private DefaultTableModel tableModel;
+    private JLabel averageLabel;
+    private JLabel highestLabel;
+    private JLabel lowestLabel;
+
+    private ArrayList<Student> students = new ArrayList<>();
+
+    public StudentGradeTrackerGUI() {
+        setTitle("Student Grade Tracker");
+        setSize(500, 400);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        // UI Setup
+        JPanel inputPanel = new JPanel(new GridLayout(2, 2, 10, 10));
+        inputPanel.setBorder(BorderFactory.createTitledBorder("Add Student"));
+
+        nameField = new JTextField();
+        gradeField = new JTextField();
+
+        inputPanel.add(new JLabel("Student Name:"));
+        inputPanel.add(nameField);
+        inputPanel.add(new JLabel("Grade (0-100):"));
+        inputPanel.add(gradeField);
+
+        JButton addButton = new JButton("Add Student");
+        addButton.addActionListener(e -> addStudent());
+
+        tableModel = new DefaultTableModel(new Object[]{"Student Name", "Grade"}, 0);
+        JTable table = new JTable(tableModel);
+        JScrollPane scrollPane = new JScrollPane(table);
+
+        JPanel summaryPanel = new JPanel(new GridLayout(3, 1));
+        summaryPanel.setBorder(BorderFactory.createTitledBorder("Summary"));
+
+        averageLabel = new JLabel("Average Grade: N/A");
+        highestLabel = new JLabel("Highest Grade: N/A");
+        lowestLabel = new JLabel("Lowest Grade: N/A");
+
+        summaryPanel.add(averageLabel);
+        summaryPanel.add(highestLabel);
+        summaryPanel.add(lowestLabel);
+
+        // Layout
+        setLayout(new BorderLayout(10, 10));
+        add(inputPanel, BorderLayout.NORTH);
+        add(addButton, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.SOUTH);
+        add(summaryPanel, BorderLayout.EAST);
+
+        // Fix layout size
+        scrollPane.setPreferredSize(new Dimension(300, 150));
+        summaryPanel.setPreferredSize(new Dimension(180, 150));
+    }
+
+    private void addStudent() {
+        String name = nameField.getText().trim();
+        String gradeText = gradeField.getText().trim();
+
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter student name.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        double grade;
+        try {
+            grade = Double.parseDouble(gradeText);
+            if (grade < 0 || grade > 100) {
+                JOptionPane.showMessageDialog(this, "Grade must be between 0 and 100.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Invalid grade input.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Add to list and table
+        students.add(new Student(name, grade));
+        tableModel.addRow(new Object[]{name, grade});
+
+        // Clear inputs
+        nameField.setText("");
+        gradeField.setText("");
+
+        updateSummary();
+    }
+
+    private void updateSummary() {
+        if (students.isEmpty()) {
+            averageLabel.setText("Average Grade: N/A");
+            highestLabel.setText("Highest Grade: N/A");
+            lowestLabel.setText("Lowest Grade: N/A");
+            return;
+        }
+
+        double total = 0;
+        double highest = Double.MIN_VALUE;
+        double lowest = Double.MAX_VALUE;
+        String topStudent = "";
+        String lowStudent = "";
+
+        for (Student s : students) {
+            total += s.grade;
+            if (s.grade > highest) {
+                highest = s.grade;
+                topStudent = s.name;
+            }
+            if (s.grade < lowest) {
+                lowest = s.grade;
+                lowStudent = s.name;
+            }
+        }
+
+        double average = total / students.size();
+
+        averageLabel.setText(String.format("Average Grade: %.2f", average));
+        highestLabel.setText(String.format("Highest Grade: %.2f (%s)", highest, topStudent));
+        lowestLabel.setText(String.format("Lowest Grade: %.2f (%s)", lowest, lowStudent));
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            StudentGradeTrackerGUI tracker = new StudentGradeTrackerGUI();
+            tracker.setVisible(true);
+        });
+    }
+}
